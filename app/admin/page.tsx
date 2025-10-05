@@ -75,16 +75,41 @@ export default function Admin() {
     setCodes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   };
 
+  interface Code {
+    id: string;
+    badgeId: string;
+    // add other fields if needed
+  }
+
+  interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    bonusPoints: number;
+    active: boolean;
+    actualCodeCount: number;
+  }
+
   const fetchBadges = async () => {
     const snapshot = await getDocs(collection(db, 'badges'));
-    const badgesData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    // Calculate actual code count for each badge
+    const badgesData: Badge[] = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Badge, "id" | "actualCodeCount">),
+      actualCodeCount: 0,
+    }));
+
     const codesSnapshot = await getDocs(collection(db, 'codes'));
-    const allCodes = codesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    badgesData.forEach((badge) => {
-      badge.actualCodeCount = allCodes.filter((code) => code.badgeId === badge.id).length;
-    });
-    setBadges(badgesData);
+    const allCodes: Code[] = codesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Code, "id">),
+    }));
+
+    const badgesWithCount = badgesData.map((badge) => ({
+      ...badge,
+      actualCodeCount: allCodes.filter((code) => code.badgeId === badge.id).length,
+    }));
+
+    setBadges(badgesWithCount);
   };
 
   const fetchPrizes = async () => {
