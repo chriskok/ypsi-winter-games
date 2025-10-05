@@ -55,14 +55,15 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar userData={userData} />
 
-      <div className="container mx-auto p-8 max-w-3xl">
-        <h2 className="text-3xl font-bold mb-6">Leaderboard</h2>
+      <div className="container mx-auto p-4 sm:p-8 max-w-3xl flex-1">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6">Leaderboard</h2>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+            <table className="w-full">
             <thead className="bg-primary text-white">
               <tr>
                 <th className="p-4 text-left">Rank</th>
@@ -83,6 +84,7 @@ export default function Leaderboard() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

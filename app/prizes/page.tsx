@@ -83,11 +83,11 @@ export default function Prizes() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar userData={userData} />
 
-      <div className="container mx-auto p-8 max-w-4xl">
-        <h2 className="text-3xl font-bold mb-2">Prize Catalog</h2>
+      <div className="container mx-auto p-4 sm:p-8 max-w-4xl flex-1">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Prize Catalog</h2>
         <p className="text-gray-600 mb-6">
           You have claimed {userData?.prizesClaimedCount || 0} of 4 prizes
         </p>
@@ -98,7 +98,7 @@ export default function Prizes() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {prizes.map((prize) => (
             <div key={prize.id} className="bg-white rounded-lg shadow p-6">
               <h3 className="text-xl font-bold mb-2">{prize.name}</h3>

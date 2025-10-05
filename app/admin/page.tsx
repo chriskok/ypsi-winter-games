@@ -352,17 +352,17 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar userData={userData} currentPage="admin" />
 
-      <div className="container mx-auto p-8 max-w-6xl">
+      <div className="container mx-auto p-4 sm:p-8 max-w-6xl flex-1">
         <h2 className="text-3xl font-bold mb-6">Admin Panel</h2>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b">
+        <div className="flex gap-2 sm:gap-4 mb-6 border-b overflow-x-auto">
           <button
             onClick={() => setActiveTab('codes')}
-            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'codes' ? 'border-primary text-accent' : 'border-transparent text-gray-500 hover:text-accent'
             }`}
           >
@@ -370,7 +370,7 @@ export default function Admin() {
           </button>
           <button
             onClick={() => setActiveTab('badges')}
-            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'badges' ? 'border-primary text-accent' : 'border-transparent text-gray-500 hover:text-accent'
             }`}
           >
@@ -378,7 +378,7 @@ export default function Admin() {
           </button>
           <button
             onClick={() => setActiveTab('prizes')}
-            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'prizes' ? 'border-primary text-accent' : 'border-transparent text-gray-500 hover:text-accent'
             }`}
           >
@@ -386,7 +386,7 @@ export default function Admin() {
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'users' ? 'border-primary text-accent' : 'border-transparent text-gray-500 hover:text-accent'
             }`}
           >

@@ -118,12 +118,12 @@ export default function Badges() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar userData={userData} />
 
-      <div className="container mx-auto p-8 max-w-4xl">
-        <h2 className="text-3xl font-bold mb-2">Badges</h2>
-        <p className="text-gray-600 mb-8">
+      <div className="container mx-auto p-4 sm:p-8 max-w-4xl flex-1">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Badges</h2>
+        <p className="text-gray-600 mb-6 sm:mb-8">
           Complete badge challenges to earn bonus points! Find all codes in a badge to unlock the reward.
         </p>
 
@@ -142,14 +142,14 @@ export default function Badges() {
               >
                 <button
                   onClick={() => toggleBadge(progress.badge.id)}
-                  className="w-full p-6 border-b bg-gradient-to-r from-accent/10 to-primary/10 text-left hover:from-accent/15 hover:to-primary/15 transition-colors"
+                  className="w-full p-4 sm:p-6 border-b bg-gradient-to-r from-accent/10 to-primary/10 text-left hover:from-accent/15 hover:to-primary/15 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-accent flex items-center gap-2">
+                      <h3 className="text-xl sm:text-2xl font-bold text-accent flex items-center gap-2">
                         {progress.badge.name}
                         {progress.completed && (
-                          <span className="text-sm bg-primary text-white px-3 py-1 rounded-full">
+                          <span className="text-xs sm:text-sm bg-primary text-white px-2 sm:px-3 py-1 rounded-full">
                             ✓ Completed!
                           </span>
                         )}
@@ -190,8 +190,8 @@ export default function Badges() {
                 </button>
 
                 {expandedBadges.has(progress.badge.id) && (
-                  <div className="p-6">
-                    <h4 className="font-bold text-lg mb-4">Locations to Find:</h4>
+                  <div className="p-4 sm:p-6">
+                    <h4 className="font-bold text-base sm:text-lg mb-4">Locations to Find:</h4>
                     <div className="space-y-3">
                       {progress.codes.map((code, index) => {
                         const isRedeemed = progress.redeemedCodes.includes(code.id);

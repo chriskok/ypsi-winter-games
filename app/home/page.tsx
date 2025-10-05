@@ -155,12 +155,12 @@ function HomeContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar userData={userData} />
 
-      <div className="container mx-auto p-8 max-w-2xl">
-        <h2 className="text-3xl font-bold mb-2">Welcome, {userData.displayName}!</h2>
-        <p className="text-gray-600 mb-8">Find codes around Ypsilanti and redeem them here.</p>
+      <div className="container mx-auto p-4 sm:p-8 max-w-2xl flex-1">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">Welcome, {userData.displayName}!</h2>
+        <p className="text-gray-600 mb-6 sm:mb-8">Find codes around Ypsilanti and redeem them here.</p>
 
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h3 className="text-xl font-bold mb-4">Redeem Code</h3>
