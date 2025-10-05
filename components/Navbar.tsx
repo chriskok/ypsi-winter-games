@@ -34,8 +34,8 @@ export default function Navbar({ userData, currentPage }: NavbarProps) {
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={closeMobileMenu}>
             <img src="/android-chrome-192x192.png" alt="YWG Logo" className="h-10 w-10 rounded-lg" />
-            <h1 className="text-xl md:text-2xl font-bold text-accent">
-              {currentPage === 'admin' ? 'YWG Admin' : 'YWG'}
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-accent">
+              {currentPage === 'admin' ? 'Ypsi Winter Games Admin' : 'Ypsi Winter Games'}
             </h1>
           </Link>
 
