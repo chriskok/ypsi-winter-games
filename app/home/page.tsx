@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, increment, collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Navbar from '@/components/Navbar';
 
@@ -69,24 +69,78 @@ function HomeContent() {
         return;
       }
 
+      const codeData = codeDoc.data();
+      let totalPoints = codeData.value;
+      let badgeCompleted = false;
+      let badgeName = '';
+      let bonusPoints = 0;
+
+      // Save the redemption
       await setDoc(doc(db, 'redemptions', redemptionId), {
         userId: user.uid,
         codeId: codeUpper,
         timestamp: new Date(),
       });
 
+      // Check if this code is part of a badge
+      if (codeData.badgeId) {
+        const badgeDoc = await getDoc(doc(db, 'badges', codeData.badgeId));
+        if (badgeDoc.exists()) {
+          const badgeData = badgeDoc.data();
+
+          // Get all codes for this badge
+          const allCodesSnapshot = await getDocs(collection(db, 'codes'));
+          const badgeCodes = allCodesSnapshot.docs
+            .filter((doc) => doc.data().badgeId === codeData.badgeId)
+            .map((doc) => doc.id);
+
+          // Get all user's redemptions for this badge
+          const redemptionsQuery = query(
+            collection(db, 'redemptions'),
+            where('userId', '==', user.uid)
+          );
+          const redemptionsSnapshot = await getDocs(redemptionsQuery);
+          const userBadgeRedemptions = redemptionsSnapshot.docs
+            .map((doc) => doc.data().codeId)
+            .filter((codeId) => badgeCodes.includes(codeId));
+
+          // Check if badge is now complete (including the code we just redeemed)
+          if (badgeCodes.length > 0 && userBadgeRedemptions.length === badgeCodes.length) {
+            badgeCompleted = true;
+            badgeName = badgeData.name;
+            bonusPoints = badgeData.bonusPoints;
+            totalPoints += bonusPoints;
+          }
+        }
+      }
+
+      // Update user's total points
       await setDoc(
         doc(db, 'users', user.uid),
-        { totalPoints: increment(codeDoc.data().value) },
+        { totalPoints: increment(totalPoints) },
         { merge: true }
       );
 
-      setMessage(`Success! +${codeDoc.data().value} points`);
+      // Build success message
+      let successMessage = `Success! +${codeData.value} points`;
+
+      // Add code description if it exists
+      if (codeData.description) {
+        successMessage += `\n${codeData.description}`;
+      }
+
+      // Add badge completion if applicable
+      if (badgeCompleted) {
+        successMessage += `\n\n🎉 Badge "${badgeName}" complete! +${bonusPoints} bonus points!`;
+      }
+
+      setMessage(successMessage);
       setCode('');
 
       const updatedUserDoc = await getDoc(doc(db, 'users', user.uid));
       setUserData(updatedUserDoc.data());
     } catch (err) {
+      console.error('Error redeeming code:', err);
       setMessage('Error redeeming code');
     }
   };
@@ -127,9 +181,11 @@ function HomeContent() {
             </button>
           </form>
           {message && (
-            <p className={`mt-4 text-center font-semibold ${message.includes('Success') ? 'text-green-600' : 'text-red-600'}`}>
-              {message}
-            </p>
+            <div className={`mt-4 p-4 rounded-lg ${message.includes('Success') ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              <p className={`text-center font-semibold whitespace-pre-line ${message.includes('Success') ? 'text-green-800' : 'text-red-800'}`}>
+                {message}
+              </p>
+            </div>
           )}
         </div>
 

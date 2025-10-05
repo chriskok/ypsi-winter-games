@@ -39,6 +39,9 @@ export default function Navbar({ userData, currentPage }: NavbarProps) {
           <Link href="/home" className="text-accent hover:text-primary font-medium">
             Home
           </Link>
+          <Link href="/badges" className="text-accent hover:text-primary font-medium">
+            Badges
+          </Link>
           <Link href="/prizes" className="text-accent hover:text-primary font-medium">
             Prizes
           </Link>

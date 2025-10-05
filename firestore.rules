@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if isAdmin();
+    }
+
+    // Codes collection
+    match /codes/{codeId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Badges collection
+    match /badges/{badgeId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Prizes collection
+    match /prizes/{prizeId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Redemptions collection
+    match /redemptions/{redemptionId} {
+      // Allow reading any redemption if user is authenticated
+      // (needed for badges page to query by userId)
+      allow read, list: if request.auth != null;
+      allow create: if request.auth != null &&
+                       redemptionId == request.auth.uid + '_' + request.resource.data.codeId;
+    }
+
+    // Claims collection
+    match /claims/{claimId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow write: if isAdmin();
+    }
+  }
+}

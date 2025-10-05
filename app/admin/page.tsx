@@ -7,7 +7,7 @@ import { doc, getDoc, setDoc, collection, getDocs, deleteDoc, updateDoc } from '
 import { auth, db } from '@/lib/firebase';
 import Navbar from '@/components/Navbar';
 
-type TabType = 'codes' | 'prizes' | 'users';
+type TabType = 'codes' | 'badges' | 'prizes' | 'users';
 
 export default function Admin() {
   const [user, setUser] = useState<any>(null);
@@ -19,6 +19,19 @@ export default function Admin() {
   const [newCode, setNewCode] = useState('');
   const [codeValue, setCodeValue] = useState(100);
   const [codeDescription, setCodeDescription] = useState('');
+  const [codeBadgeId, setCodeBadgeId] = useState('');
+  const [codeHint, setCodeHint] = useState('');
+  const [codeOrder, setCodeOrder] = useState(1);
+
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCode, setEditingCode] = useState<any>(null);
+
+  // Badges state
+  const [badges, setBadges] = useState<any[]>([]);
+  const [newBadgeName, setNewBadgeName] = useState('');
+  const [newBadgeDescription, setNewBadgeDescription] = useState('');
+  const [newBadgeBonus, setNewBadgeBonus] = useState(200);
 
   // Prizes state
   const [prizes, setPrizes] = useState<any[]>([]);
@@ -47,7 +60,7 @@ export default function Admin() {
           return;
         }
 
-        await Promise.all([fetchCodes(), fetchPrizes(), fetchUsers()]);
+        await Promise.all([fetchCodes(), fetchBadges(), fetchPrizes(), fetchUsers()]);
         setLoading(false);
       } else {
         setLoading(false);
@@ -60,6 +73,18 @@ export default function Admin() {
   const fetchCodes = async () => {
     const snapshot = await getDocs(collection(db, 'codes'));
     setCodes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  };
+
+  const fetchBadges = async () => {
+    const snapshot = await getDocs(collection(db, 'badges'));
+    const badgesData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    // Calculate actual code count for each badge
+    const codesSnapshot = await getDocs(collection(db, 'codes'));
+    const allCodes = codesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    badgesData.forEach((badge) => {
+      badge.actualCodeCount = allCodes.filter((code) => code.badgeId === badge.id).length;
+    });
+    setBadges(badgesData);
   };
 
   const fetchPrizes = async () => {
@@ -93,6 +118,9 @@ export default function Admin() {
       await setDoc(doc(db, 'codes', codeUpper), {
         value: codeValue,
         description: codeDescription,
+        badgeId: codeBadgeId || null,
+        hint: codeHint || '',
+        order: codeOrder,
         active: true,
       });
 
@@ -100,7 +128,11 @@ export default function Admin() {
       setNewCode('');
       setCodeValue(100);
       setCodeDescription('');
+      setCodeBadgeId('');
+      setCodeHint('');
+      setCodeOrder(1);
       await fetchCodes();
+      await fetchBadges();
     } catch (err) {
       setMessage('Error adding code');
     }
@@ -120,9 +152,107 @@ export default function Admin() {
     try {
       await deleteDoc(doc(db, 'codes', codeId));
       await fetchCodes();
+      await fetchBadges();
       setMessage(`Code ${codeId} deleted`);
     } catch (err) {
       setMessage('Error deleting code');
+    }
+  };
+
+  const handleOpenEditModal = (code: any) => {
+    setEditingCode({
+      id: code.id,
+      value: code.value,
+      description: code.description || '',
+      badgeId: code.badgeId || '',
+      hint: code.hint || '',
+      order: code.order || 1,
+      active: code.active,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingCode(null);
+  };
+
+  const handleSaveEditCode = async () => {
+    if (!editingCode) return;
+    setMessage('');
+
+    try {
+      await updateDoc(doc(db, 'codes', editingCode.id), {
+        value: editingCode.value,
+        description: editingCode.description,
+        badgeId: editingCode.badgeId || null,
+        hint: editingCode.hint,
+        order: editingCode.order,
+        active: editingCode.active,
+      });
+
+      setMessage(`Code ${editingCode.id} updated successfully!`);
+      await fetchCodes();
+      await fetchBadges();
+      handleCloseEditModal();
+    } catch (err) {
+      setMessage('Error updating code');
+    }
+  };
+
+  // Badge management
+  const handleAddBadge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage('');
+
+    try {
+      const badgeId = newBadgeName.toLowerCase().replace(/\s+/g, '-');
+      const badgeDoc = await getDoc(doc(db, 'badges', badgeId));
+      if (badgeDoc.exists()) {
+        setMessage('Badge with this name already exists');
+        return;
+      }
+
+      await setDoc(doc(db, 'badges', badgeId), {
+        name: newBadgeName,
+        description: newBadgeDescription,
+        bonusPoints: newBadgeBonus,
+        active: true,
+      });
+
+      setMessage(`Badge "${newBadgeName}" created successfully!`);
+      setNewBadgeName('');
+      setNewBadgeDescription('');
+      setNewBadgeBonus(200);
+      await fetchBadges();
+    } catch (err) {
+      setMessage('Error creating badge');
+    }
+  };
+
+  const handleToggleBadge = async (badgeId: string, currentStatus: boolean) => {
+    try {
+      await updateDoc(doc(db, 'badges', badgeId), { active: !currentStatus });
+      await fetchBadges();
+    } catch (err) {
+      setMessage('Error updating badge');
+    }
+  };
+
+  const handleDeleteBadge = async (badgeId: string) => {
+    if (!confirm(`Delete this badge? Codes will remain but will no longer be associated with this badge.`)) return;
+    try {
+      await deleteDoc(doc(db, 'badges', badgeId));
+      // Also remove badge association from codes
+      const badgeCodes = codes.filter((code) => code.badgeId === badgeId);
+      for (const code of badgeCodes) {
+        await updateDoc(doc(db, 'codes', code.id), { badgeId: null });
+      }
+      await fetchBadges();
+      await fetchCodes();
+      setMessage('Badge deleted');
+    } catch (err) {
+      setMessage('Error deleting badge');
     }
   };
 
@@ -214,6 +344,14 @@ export default function Admin() {
             Codes
           </button>
           <button
+            onClick={() => setActiveTab('badges')}
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+              activeTab === 'badges' ? 'border-primary text-accent' : 'border-transparent text-gray-500 hover:text-accent'
+            }`}
+          >
+            Badges
+          </button>
+          <button
             onClick={() => setActiveTab('prizes')}
             className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
               activeTab === 'prizes' ? 'border-primary text-accent' : 'border-transparent text-gray-500 hover:text-accent'
@@ -243,7 +381,7 @@ export default function Admin() {
             <div className="bg-white rounded-lg shadow p-6 mb-8">
               <h3 className="text-xl font-bold mb-4">Add New Code</h3>
               <form onSubmit={handleAddCode} className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Code</label>
                     <input
@@ -266,6 +404,21 @@ export default function Admin() {
                       min={1}
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Badge</label>
+                    <select
+                      value={codeBadgeId}
+                      onChange={(e) => setCodeBadgeId(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">None (Standalone)</option>
+                      {badges.map((badge) => (
+                        <option key={badge.id} value={badge.id}>
+                          {badge.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Description</label>
@@ -276,6 +429,28 @@ export default function Admin() {
                     placeholder="Found at the Depot Town sign"
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Hint (for badge codes)</label>
+                    <input
+                      type="text"
+                      value={codeHint}
+                      onChange={(e) => setCodeHint(e.target.value)}
+                      placeholder="Explore the colorful world of children's literature"
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Order (for badge codes)</label>
+                    <input
+                      type="number"
+                      value={codeOrder}
+                      onChange={(e) => setCodeOrder(Number(e.target.value))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      min={1}
+                    />
+                  </div>
                 </div>
                 <button type="submit" className="w-full bg-accent text-white py-2 rounded-lg font-semibold hover:bg-accent/90">
                   Add Code
@@ -292,7 +467,8 @@ export default function Admin() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="p-4 text-left">Code</th>
-                      <th className="p-4 text-left">Description</th>
+                      <th className="p-4 text-left">Badge</th>
+                      <th className="p-4 text-left">Hint</th>
                       <th className="p-4 text-left">Value</th>
                       <th className="p-4 text-left">Status</th>
                       <th className="p-4 text-right">Actions</th>
@@ -302,7 +478,16 @@ export default function Admin() {
                     {codes.map((code) => (
                       <tr key={code.id} className="border-b hover:bg-gray-50">
                         <td className="p-4 font-mono font-semibold">{code.id}</td>
-                        <td className="p-4 text-gray-600 text-sm">{code.description || '-'}</td>
+                        <td className="p-4 text-sm">
+                          {code.badgeId ? (
+                            <span className="px-2 py-1 bg-primary/20 text-accent rounded text-xs">
+                              {badges.find((b) => b.id === code.badgeId)?.name || code.badgeId}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="p-4 text-gray-600 text-sm max-w-xs truncate">{code.hint || '-'}</td>
                         <td className="p-4">{code.value} pts</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-sm ${code.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
@@ -311,6 +496,12 @@ export default function Admin() {
                         </td>
                         <td className="p-4 text-right space-x-2">
                           <button
+                            onClick={() => handleOpenEditModal(code)}
+                            className="px-3 py-1 bg-primary/20 text-accent rounded hover:bg-primary/30 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
                             onClick={() => handleToggleCode(code.id, code.active)}
                             className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
                           >
@@ -318,6 +509,108 @@ export default function Admin() {
                           </button>
                           <button
                             onClick={() => handleDeleteCode(code.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Badges Tab */}
+        {activeTab === 'badges' && (
+          <>
+            <div className="bg-white rounded-lg shadow p-6 mb-8">
+              <h3 className="text-xl font-bold mb-4">Create New Badge</h3>
+              <form onSubmit={handleAddBadge} className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Badge Name</label>
+                    <input
+                      type="text"
+                      value={newBadgeName}
+                      onChange={(e) => setNewBadgeName(e.target.value)}
+                      placeholder="Ypsi District Library - Whittaker Explorer"
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Bonus Points</label>
+                    <input
+                      type="number"
+                      value={newBadgeBonus}
+                      onChange={(e) => setNewBadgeBonus(Number(e.target.value))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                      min={1}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={newBadgeDescription}
+                    onChange={(e) => setNewBadgeDescription(e.target.value)}
+                    placeholder="Explore every corner of the Whittaker branch library"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+                <button type="submit" className="w-full bg-accent text-white py-2 rounded-lg font-semibold hover:bg-accent/90">
+                  Create Badge
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="p-6 border-b">
+                <h3 className="text-xl font-bold">Existing Badges ({badges.length})</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4 text-left">Badge Name</th>
+                      <th className="p-4 text-left">Description</th>
+                      <th className="p-4 text-left">Codes</th>
+                      <th className="p-4 text-left">Bonus Points</th>
+                      <th className="p-4 text-left">Status</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {badges.map((badge) => (
+                      <tr key={badge.id} className="border-b hover:bg-gray-50">
+                        <td className="p-4 font-semibold">{badge.name}</td>
+                        <td className="p-4 text-gray-600 text-sm">{badge.description}</td>
+                        <td className="p-4 text-center">
+                          <span className="px-2 py-1 bg-primary/20 text-accent rounded text-sm font-semibold">
+                            {badge.actualCodeCount || 0}
+                          </span>
+                        </td>
+                        <td className="p-4">+{badge.bonusPoints} pts</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded text-sm ${badge.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {badge.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right space-x-2">
+                          <button
+                            onClick={() => handleToggleBadge(badge.id, badge.active)}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                          >
+                            {badge.active ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBadge(badge.id)}
                             className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
                           >
                             Delete
@@ -476,6 +769,108 @@ export default function Admin() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Code Modal */}
+        {isEditModalOpen && editingCode && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b">
+                <h3 className="text-2xl font-bold text-accent">Edit Code: {editingCode.id}</h3>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Points Value</label>
+                    <input
+                      type="number"
+                      value={editingCode.value}
+                      onChange={(e) => setEditingCode({ ...editingCode, value: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      min={1}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Badge</label>
+                    <select
+                      value={editingCode.badgeId}
+                      onChange={(e) => setEditingCode({ ...editingCode, badgeId: e.target.value })}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">None (Standalone)</option>
+                      {badges.map((badge) => (
+                        <option key={badge.id} value={badge.id}>
+                          {badge.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={editingCode.description}
+                    onChange={(e) => setEditingCode({ ...editingCode, description: e.target.value })}
+                    placeholder="Found at the Depot Town sign"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Hint (for badge codes)</label>
+                  <textarea
+                    value={editingCode.hint}
+                    onChange={(e) => setEditingCode({ ...editingCode, hint: e.target.value })}
+                    placeholder="Explore the colorful world of children's literature"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Order (for badge codes)</label>
+                    <input
+                      type="number"
+                      value={editingCode.order}
+                      onChange={(e) => setEditingCode({ ...editingCode, order: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      min={1}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Status</label>
+                    <select
+                      value={editingCode.active ? 'active' : 'inactive'}
+                      onChange={(e) => setEditingCode({ ...editingCode, active: e.target.value === 'active' })}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t flex gap-3 justify-end">
+                <button
+                  onClick={handleCloseEditModal}
+                  className="px-6 py-2 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEditCode}
+                  className="px-6 py-2 bg-accent text-white rounded-lg font-semibold hover:bg-accent/90"
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         )}
