@@ -65,6 +65,9 @@ export default function Navbar({ userData, currentPage }: NavbarProps) {
                 </Link>
               </>
             )}
+            <Link href="/settings" className="text-accent hover:text-primary font-medium">
+              Settings
+            </Link>
             <button
               onClick={handleLogout}
               className="text-accent hover:text-secondary font-medium"
@@ -138,6 +141,13 @@ export default function Navbar({ userData, currentPage }: NavbarProps) {
                 </Link>
               </>
             )}
+            <Link
+              href="/settings"
+              className="block px-4 py-2 text-accent hover:bg-primary/10 rounded-lg font-medium"
+              onClick={closeMobileMenu}
+            >
+              Settings
+            </Link>
             <button
               onClick={handleLogout}
               className="block w-full text-left px-4 py-2 text-accent hover:bg-secondary/10 rounded-lg font-medium"
