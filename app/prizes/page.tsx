@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, increment, collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { PRIZES } from '@/lib/prizes';
 import Navbar from '@/components/Navbar';
 
 export default function Prizes() {
   const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [prizes, setPrizes] = useState<any[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function Prizes() {
         if (userDoc.exists()) {
           setUserData(userDoc.data());
         }
+        await fetchPrizes();
         setLoading(false);
       } else {
         setLoading(false);
@@ -31,6 +32,11 @@ export default function Prizes() {
     });
     return () => unsubscribe();
   }, []);
+
+  const fetchPrizes = async () => {
+    const snapshot = await getDocs(collection(db, 'prizes'));
+    setPrizes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  };
 
   const handleClaim = async (prizeId: string, prizeCost: number, prizeName: string) => {
     setMessage('');
@@ -93,7 +99,7 @@ export default function Prizes() {
         )}
 
         <div className="grid md:grid-cols-3 gap-6">
-          {PRIZES.map((prize) => (
+          {prizes.map((prize) => (
             <div key={prize.id} className="bg-white rounded-lg shadow p-6">
               <h3 className="text-xl font-bold mb-2">{prize.name}</h3>
               <p className="text-gray-600 mb-4">{prize.description}</p>
