@@ -7,10 +7,19 @@ import { doc, getDoc, setDoc, increment, collection, getDocs } from 'firebase/fi
 import { auth, db } from '@/lib/firebase';
 import Navbar from '@/components/Navbar';
 
+interface Prize {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  imageUrl?: string;
+  inStock: boolean;
+}
+
 export default function Prizes() {
   const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
-  const [prizes, setPrizes] = useState<any[]>([]);
+  const [prizes, setPrizes] = useState<Prize[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -35,7 +44,13 @@ export default function Prizes() {
 
   const fetchPrizes = async () => {
     const snapshot = await getDocs(collection(db, 'prizes'));
-    setPrizes(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    const prizesData = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    } as Prize));
+    // Sort by cost (ascending)
+    prizesData.sort((a, b) => a.cost - b.cost);
+    setPrizes(prizesData);
   };
 
   const handleClaim = async (prizeId: string, prizeCost: number, prizeName: string) => {
@@ -100,9 +115,17 @@ export default function Prizes() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {prizes.map((prize) => (
-            <div key={prize.id} className="bg-white rounded-lg shadow p-6">
+            <div key={prize.id} className="bg-white rounded-lg shadow p-6 flex flex-col">
+              {prize.imageUrl && (
+                <img
+                  src={prize.imageUrl}
+                  alt={prize.name}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
               <h3 className="text-xl font-bold mb-2">{prize.name}</h3>
-              <p className="text-gray-600 mb-4">{prize.description}</p>
+              <p className="text-gray-600 mb-4 flex-1">{prize.description}</p>
               <p className="text-2xl font-bold text-accent mb-4">{prize.cost} points</p>
               <button
                 onClick={() => handleClaim(prize.id, prize.cost, prize.name)}

@@ -21,8 +21,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent to-accent/90 flex items-center justify-center p-4">
       <div className="text-center text-white">
-        <h1 className="text-5xl font-bold mb-4 text-primary">Ypsi Winter Games</h1>
-        <p className="text-xl mb-8">Find codes around Ypsilanti, earn points, win prizes!</p>
+        {/* <img
+          src="/android-chrome-192x192.png"
+          alt="Ypsi Winter Games Logo"
+          className="h-24 w-24 sm:h-32 sm:w-32 mx-auto mb-6 rounded-2xl shadow-lg bg-white p-2"
+        /> */}
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-primary">Ypsi Winter Games</h1>
+        <p className="text-lg sm:text-xl mb-8">Find codes around Ypsilanti, earn points, win prizes!</p>
         <div className="space-x-4">
           <Link
             href="/login"

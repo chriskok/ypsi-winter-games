@@ -38,6 +38,11 @@ export default function Admin() {
   const [newPrizeName, setNewPrizeName] = useState('');
   const [newPrizeCost, setNewPrizeCost] = useState(500);
   const [newPrizeDescription, setNewPrizeDescription] = useState('');
+  const [newPrizeImageUrl, setNewPrizeImageUrl] = useState('');
+
+  // Prize edit modal state
+  const [isPrizeEditModalOpen, setIsPrizeEditModalOpen] = useState(false);
+  const [editingPrize, setEditingPrize] = useState<any>(null);
 
   // Users state
   const [users, setUsers] = useState<any[]>([]);
@@ -292,6 +297,7 @@ export default function Admin() {
         name: newPrizeName,
         cost: newPrizeCost,
         description: newPrizeDescription,
+        imageUrl: newPrizeImageUrl || '',
         inStock: true,
       });
 
@@ -299,6 +305,7 @@ export default function Admin() {
       setNewPrizeName('');
       setNewPrizeCost(500);
       setNewPrizeDescription('');
+      setNewPrizeImageUrl('');
       await fetchPrizes();
     } catch (err) {
       setMessage('Error adding prize');
@@ -322,6 +329,44 @@ export default function Admin() {
       setMessage('Prize deleted');
     } catch (err) {
       setMessage('Error deleting prize');
+    }
+  };
+
+  const handleOpenPrizeEditModal = (prize: any) => {
+    setEditingPrize({
+      id: prize.id,
+      name: prize.name,
+      cost: prize.cost,
+      description: prize.description || '',
+      imageUrl: prize.imageUrl || '',
+      inStock: prize.inStock,
+    });
+    setIsPrizeEditModalOpen(true);
+  };
+
+  const handleClosePrizeEditModal = () => {
+    setIsPrizeEditModalOpen(false);
+    setEditingPrize(null);
+  };
+
+  const handleSaveEditPrize = async () => {
+    if (!editingPrize) return;
+    setMessage('');
+
+    try {
+      await updateDoc(doc(db, 'prizes', editingPrize.id), {
+        name: editingPrize.name,
+        cost: editingPrize.cost,
+        description: editingPrize.description,
+        imageUrl: editingPrize.imageUrl || '',
+        inStock: editingPrize.inStock,
+      });
+
+      setMessage(`Prize ${editingPrize.name} updated successfully!`);
+      await fetchPrizes();
+      handleClosePrizeEditModal();
+    } catch (err) {
+      setMessage('Error updating prize');
     }
   };
 
@@ -691,6 +736,17 @@ export default function Admin() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
+                  <input
+                    type="url"
+                    value={newPrizeImageUrl}
+                    onChange={(e) => setNewPrizeImageUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Paste an image URL from any image hosting service</p>
+                </div>
                 <button type="submit" className="w-full bg-accent text-white py-2 rounded-lg font-semibold hover:bg-accent/90">
                   Add Prize
                 </button>
@@ -724,6 +780,12 @@ export default function Admin() {
                           </span>
                         </td>
                         <td className="p-4 text-right space-x-2">
+                          <button
+                            onClick={() => handleOpenPrizeEditModal(prize)}
+                            className="px-3 py-1 bg-primary/20 text-accent rounded hover:bg-primary/30 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
                           <button
                             onClick={() => handleTogglePrize(prize.id, prize.inStock)}
                             className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
@@ -891,6 +953,100 @@ export default function Admin() {
                 </button>
                 <button
                   onClick={handleSaveEditCode}
+                  className="px-6 py-2 bg-accent text-white rounded-lg font-semibold hover:bg-accent/90"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Prize Modal */}
+        {isPrizeEditModalOpen && editingPrize && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b">
+                <h3 className="text-2xl font-bold text-accent">Edit Prize: {editingPrize.name}</h3>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Prize Name</label>
+                  <input
+                    type="text"
+                    value={editingPrize.name}
+                    onChange={(e) => setEditingPrize({ ...editingPrize, name: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Point Cost</label>
+                  <input
+                    type="number"
+                    value={editingPrize.cost}
+                    onChange={(e) => setEditingPrize({ ...editingPrize, cost: Number(e.target.value) })}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    min={1}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={editingPrize.description}
+                    onChange={(e) => setEditingPrize({ ...editingPrize, description: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Image URL</label>
+                  <input
+                    type="url"
+                    value={editingPrize.imageUrl}
+                    onChange={(e) => setEditingPrize({ ...editingPrize, imageUrl: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Paste an image URL from any image hosting service</p>
+                  {editingPrize.imageUrl && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 mb-1">Preview:</p>
+                      <img
+                        src={editingPrize.imageUrl}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg border"
+                        onError={(e) => { e.currentTarget.src = ''; e.currentTarget.alt = 'Invalid image URL'; }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Stock Status</label>
+                  <select
+                    value={editingPrize.inStock ? 'in-stock' : 'out-of-stock'}
+                    onChange={(e) => setEditingPrize({ ...editingPrize, inStock: e.target.value === 'in-stock' })}
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="in-stock">In Stock</option>
+                    <option value="out-of-stock">Out of Stock</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-6 border-t flex gap-3 justify-end">
+                <button
+                  onClick={handleClosePrizeEditModal}
+                  className="px-6 py-2 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEditPrize}
                   className="px-6 py-2 bg-accent text-white rounded-lg font-semibold hover:bg-accent/90"
                 >
                   Save Changes
