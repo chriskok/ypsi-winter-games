@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Navbar from '@/components/Navbar';
 
-export default function Dashboard() {
+function HomeContent() {
   const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hasProcessedUrl = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -34,10 +36,24 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  const handleRedeem = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Auto-redeem code from URL parameter (QR code support)
+  useEffect(() => {
+    const urlCode = searchParams.get('code');
+    if (urlCode && user && userData && !loading && !hasProcessedUrl.current) {
+      hasProcessedUrl.current = true;
+      setCode(urlCode.toUpperCase());
+      // Auto-submit after a brief delay to show the code
+      setTimeout(() => {
+        handleRedeemCode(urlCode.toUpperCase());
+      }, 500);
+      // Clear URL parameter
+      router.replace('/home');
+    }
+  }, [user, userData, loading]);
+
+  const handleRedeemCode = async (codeToRedeem: string) => {
     setMessage('');
-    const codeUpper = code.toUpperCase().trim();
+    const codeUpper = codeToRedeem.toUpperCase().trim();
 
     try {
       const codeDoc = await getDoc(doc(db, 'codes', codeUpper));
@@ -73,6 +89,11 @@ export default function Dashboard() {
     } catch (err) {
       setMessage('Error redeeming code');
     }
+  };
+
+  const handleRedeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleRedeemCode(code);
   };
 
   if (loading || !userData) {
@@ -123,5 +144,13 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
