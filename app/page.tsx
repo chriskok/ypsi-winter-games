@@ -32,7 +32,7 @@ export default function Home() {
           </Link>
           <Link
             href="/signup"
-            className="bg-secondary text-white px-6 py-3 rounded-lg font-semibold hover:bg-secondary/90 border-2 border-primary inline-block"
+            className="bg-secondary text-white px-6 py-3 rounded-lg font-semibold hover:bg-secondary/90 inline-block"
           >
             Sign Up
           </Link>
