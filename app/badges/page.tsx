@@ -146,10 +146,10 @@ export default function Badges() {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                      <h3 className="text-xl sm:text-2xl font-bold text-accent flex items-center gap-2">
-                        {progress.badge.name}
+                      <h3 className="text-xl sm:text-2xl font-bold text-accent flex flex-wrap items-center gap-2">
+                        <span>{progress.badge.name}</span>
                         {progress.completed && (
-                          <span className="text-xs sm:text-sm bg-primary text-white px-2 sm:px-3 py-1 rounded-full">
+                          <span className="text-xs sm:text-sm bg-primary text-white px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
                             ✓ Completed!
                           </span>
                         )}
