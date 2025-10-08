@@ -55,6 +55,9 @@ export default function Navbar({ userData, currentPage }: NavbarProps) {
             <Link href="/prizes" className="text-accent hover:text-primary font-medium">
               Prizes
             </Link>
+            <Link href="/faq" className="text-accent hover:text-primary font-medium">
+              FAQ
+            </Link>
             {userData?.isAdmin && (
               <>
                 <Link href="/leaderboard" className="text-accent hover:text-primary font-medium">
@@ -122,6 +125,13 @@ export default function Navbar({ userData, currentPage }: NavbarProps) {
               onClick={closeMobileMenu}
             >
               Prizes
+            </Link>
+            <Link
+              href="/faq"
+              className="block px-4 py-2 text-accent hover:bg-primary/10 rounded-lg font-medium"
+              onClick={closeMobileMenu}
+            >
+              FAQ
             </Link>
             {userData?.isAdmin && (
               <>
