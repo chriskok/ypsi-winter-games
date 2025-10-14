@@ -34,11 +34,15 @@ export default function FAQ() {
   const faqItems = [
     {
       question: "Who are we?",
-      answer: "We're a group of designers in the Ypsi area who love our community and wanted to create a fun way for people to explore the town this winter!"
+      answer: "We're a group of designers in the Ypsi area who love our community and wanted to create a fun way for people to explore the town this winter! Welcome to the 3rd annual Ypsi Winter Games!"
     },
     {
       question: "How did this come about?",
-      answer: "We were inspired by the Ann Arbor Summer Games and how they brought the community together in such a cool way. We wanted to create something similar for Ypsilanti - a fun excuse to get outside, discover local spots, and connect with neighbors during the winter months!"
+      answer: "We were inspired by the Ann Arbor Summer Games and how they brought the community together in such a cool way. The first Ypsi Winter Games was just amongst friends - a small experiment to see if we could create something fun for our community. It was such a success that we've grown it into this year's 3rd annual event!"
+    },
+    {
+      question: "What have we learned since starting?",
+      answer: "So much! The first year was just amongst friends - we literally hand-delivered prizes and coordinated everything in group chats. Since then, we've learned that people love discovering hidden spots in Ypsi they never knew existed, that the community is full of competitive badge hunters (you know who you are!), and that winter in Ypsilanti is way more fun when you have a reason to get outside. We've also learned to make the app better each year based on your feedback!"
     },
     {
       question: "Are we associated with the Ypsilanti District Library?",
@@ -46,7 +50,7 @@ export default function FAQ() {
     },
     {
       question: "When does this run?",
-      answer: "The Ypsi Winter Games run from January 15, 2026 to March 15, 2026. Bundle up and happy hunting!"
+      answer: "The 3rd annual Ypsi Winter Games runs from January 15, 2026 to March 15, 2026. Bundle up and happy hunting!"
     },
     {
       question: "How do you play?",

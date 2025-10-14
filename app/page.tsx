@@ -27,6 +27,8 @@ export default function Home() {
           className="h-24 w-24 sm:h-32 sm:w-32 mx-auto mb-6 rounded-2xl shadow-lg bg-white p-2"
         /> */}
         <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-primary">Ypsi Winter Games</h1>
+        <p className="text-lg sm:text-xl mb-2 font-semibold">3rd Annual</p>
+        <p className="text-md sm:text-lg mb-2">January 15 - March 15, 2026</p>
         <p className="text-lg sm:text-xl mb-8">Find codes around Ypsilanti, earn points, win prizes!</p>
         <div className="space-x-4">
           <Link
