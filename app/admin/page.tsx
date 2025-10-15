@@ -39,6 +39,8 @@ export default function Admin() {
   const [newPrizeCost, setNewPrizeCost] = useState(500);
   const [newPrizeDescription, setNewPrizeDescription] = useState('');
   const [newPrizeImageUrl, setNewPrizeImageUrl] = useState('');
+  const [newPrizeTotalAvailable, setNewPrizeTotalAvailable] = useState(50);
+  const [newPrizeRedeemed, setNewPrizeRedeemed] = useState(0);
 
   // Prize edit modal state
   const [isPrizeEditModalOpen, setIsPrizeEditModalOpen] = useState(false);
@@ -299,6 +301,8 @@ export default function Admin() {
         description: newPrizeDescription,
         imageUrl: newPrizeImageUrl || '',
         inStock: true,
+        totalAvailable: newPrizeTotalAvailable,
+        redeemed: newPrizeRedeemed,
       });
 
       setMessage(`Prize ${newPrizeName} added!`);
@@ -306,6 +310,8 @@ export default function Admin() {
       setNewPrizeCost(500);
       setNewPrizeDescription('');
       setNewPrizeImageUrl('');
+      setNewPrizeTotalAvailable(50);
+      setNewPrizeRedeemed(0);
       await fetchPrizes();
     } catch (err) {
       setMessage('Error adding prize');
@@ -340,6 +346,8 @@ export default function Admin() {
       description: prize.description || '',
       imageUrl: prize.imageUrl || '',
       inStock: prize.inStock,
+      totalAvailable: prize.totalAvailable || 0,
+      redeemed: prize.redeemed || 0,
     });
     setIsPrizeEditModalOpen(true);
   };
@@ -360,6 +368,8 @@ export default function Admin() {
         description: editingPrize.description,
         imageUrl: editingPrize.imageUrl || '',
         inStock: editingPrize.inStock,
+        totalAvailable: editingPrize.totalAvailable,
+        redeemed: editingPrize.redeemed,
       });
 
       setMessage(`Prize ${editingPrize.name} updated successfully!`);
@@ -747,6 +757,32 @@ export default function Admin() {
                   />
                   <p className="text-xs text-gray-500 mt-1">Paste an image URL from any image hosting service</p>
                 </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Total Available</label>
+                    <input
+                      type="number"
+                      value={newPrizeTotalAvailable}
+                      onChange={(e) => setNewPrizeTotalAvailable(Number(e.target.value))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                      min={1}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">How many of this prize are available</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Already Redeemed</label>
+                    <input
+                      type="number"
+                      value={newPrizeRedeemed}
+                      onChange={(e) => setNewPrizeRedeemed(Number(e.target.value))}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                      min={0}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Usually 0 for new prizes</p>
+                  </div>
+                </div>
                 <button type="submit" className="w-full bg-accent text-white py-2 rounded-lg font-semibold hover:bg-accent/90">
                   Add Prize
                 </button>
@@ -763,6 +799,7 @@ export default function Admin() {
                     <tr>
                       <th className="p-4 text-left">Prize Name</th>
                       <th className="p-4 text-left">Description</th>
+                      <th className="p-4 text-left">Inventory</th>
                       <th className="p-4 text-left">Cost</th>
                       <th className="p-4 text-left">Status</th>
                       <th className="p-4 text-right">Actions</th>
@@ -773,6 +810,16 @@ export default function Admin() {
                       <tr key={prize.id} className="border-b hover:bg-gray-50">
                         <td className="p-4 font-semibold">{prize.name}</td>
                         <td className="p-4 text-gray-600 text-sm">{prize.description}</td>
+                        <td className="p-4">
+                          <div className="text-sm">
+                            <span className="font-semibold">{prize.redeemed || 0}</span>
+                            <span className="text-gray-500"> / </span>
+                            <span>{prize.totalAvailable || 0}</span>
+                          </div>
+                          {(prize.redeemed || 0) >= (prize.totalAvailable || 0) && (
+                            <span className="text-xs text-red-600 font-semibold">Sold Out</span>
+                          )}
+                        </td>
                         <td className="p-4">{prize.cost} pts</td>
                         <td className="p-4">
                           <span className={`px-2 py-1 rounded text-sm ${prize.inStock ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
@@ -1023,6 +1070,29 @@ export default function Admin() {
                       />
                     </div>
                   )}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Total Available</label>
+                    <input
+                      type="number"
+                      value={editingPrize.totalAvailable}
+                      onChange={(e) => setEditingPrize({ ...editingPrize, totalAvailable: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      min={1}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Already Redeemed</label>
+                    <input
+                      type="number"
+                      value={editingPrize.redeemed}
+                      onChange={(e) => setEditingPrize({ ...editingPrize, redeemed: Number(e.target.value) })}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      min={0}
+                    />
+                  </div>
                 </div>
 
                 <div>

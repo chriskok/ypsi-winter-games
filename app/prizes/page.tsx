@@ -14,6 +14,8 @@ interface Prize {
   cost: number;
   imageUrl?: string;
   inStock: boolean;
+  totalAvailable: number;
+  redeemed: number;
 }
 
 export default function Prizes() {
@@ -56,6 +58,18 @@ export default function Prizes() {
   const handleClaim = async (prizeId: string, prizeCost: number, prizeName: string) => {
     setMessage('');
 
+    // Find the prize to check inventory
+    const prize = prizes.find(p => p.id === prizeId);
+    if (!prize) {
+      setMessage('Prize not found');
+      return;
+    }
+
+    if (prize.redeemed >= prize.totalAvailable) {
+      setMessage('This prize is sold out!');
+      return;
+    }
+
     if (userData.totalPoints < prizeCost) {
       setMessage('Not enough points!');
       return;
@@ -67,6 +81,7 @@ export default function Prizes() {
     }
 
     try {
+      // Update user points and prize count
       await setDoc(
         doc(db, 'users', user.uid),
         {
@@ -76,6 +91,7 @@ export default function Prizes() {
         { merge: true }
       );
 
+      // Record the claim
       await setDoc(doc(db, 'claims', `${user.uid}_${prizeId}_${Date.now()}`), {
         userId: user.uid,
         prizeId,
@@ -84,10 +100,21 @@ export default function Prizes() {
         timestamp: new Date(),
       });
 
+      // Increment the redeemed count for this prize
+      await setDoc(
+        doc(db, 'prizes', prizeId),
+        {
+          redeemed: increment(1),
+        },
+        { merge: true }
+      );
+
       setMessage(`Success! You claimed ${prizeName}`);
 
+      // Refresh data
       const updatedUserDoc = await getDoc(doc(db, 'users', user.uid));
       setUserData(updatedUserDoc.data());
+      await fetchPrizes(); // Refresh prizes to show updated inventory
     } catch (err) {
       setMessage('Error claiming prize');
     }
@@ -125,18 +152,22 @@ export default function Prizes() {
                 />
               )}
               <h3 className="text-xl font-bold mb-2">{prize.name}</h3>
-              <p className="text-gray-600 mb-4 flex-1">{prize.description}</p>
+              <p className="text-gray-600 mb-2 flex-1">{prize.description}</p>
+              <p className="text-sm text-gray-500 mb-4">
+                {prize.redeemed} of {prize.totalAvailable} claimed
+                {prize.redeemed >= prize.totalAvailable && <span className="text-red-600 font-semibold ml-2">(Sold Out)</span>}
+              </p>
               <p className="text-2xl font-bold text-accent mb-4">{prize.cost} points</p>
               <button
                 onClick={() => handleClaim(prize.id, prize.cost, prize.name)}
-                disabled={!prize.inStock || userData?.totalPoints < prize.cost || userData?.prizesClaimedCount >= 4}
+                disabled={!prize.inStock || prize.redeemed >= prize.totalAvailable || userData?.totalPoints < prize.cost || userData?.prizesClaimedCount >= 4}
                 className={`w-full py-2 rounded-lg font-semibold ${
-                  prize.inStock && userData?.totalPoints >= prize.cost && userData?.prizesClaimedCount < 4
+                  prize.inStock && prize.redeemed < prize.totalAvailable && userData?.totalPoints >= prize.cost && userData?.prizesClaimedCount < 4
                     ? 'bg-accent text-white hover:bg-accent/90'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {!prize.inStock ? 'Out of Stock' : 'Claim Prize'}
+                {prize.redeemed >= prize.totalAvailable ? 'Sold Out' : !prize.inStock ? 'Out of Stock' : 'Claim Prize'}
               </button>
             </div>
           ))}
