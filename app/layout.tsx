@@ -2,8 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Ypsi Winter Games',
-  description: 'Find codes, earn points, win prizes!',
+  title: 'Ypsilanti Winter Games',
+  description: 'Find hidden codes around Ypsilanti, Michigan. Earn points, win prizes! Join the community scavenger hunt today!',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
