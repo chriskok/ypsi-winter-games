@@ -37,6 +37,18 @@ export default function FAQ() {
       answer: "We're a group of designers in the Ypsi area who love our community and wanted to create a fun way for people to explore the town this winter! Welcome to the 3rd annual Ypsi Winter Games!"
     },
     {
+      question: "How do you play?",
+      answer: "Check out the Badges page to see all available challenges! Each badge has a description with hints about where to find its code. Once you find a code, enter it on the home page to earn 100 points. Redeem your points for prizes! Each code can only be redeemed once per player."
+    },
+    {
+      question: "How do you pick up prizes?",
+      answer: "Prizes can be picked up at multiple events throughout the season! We'll email you the specific pickup locations and times when you claim a prize. Keep an eye on your inbox for details about upcoming prize pickup events in the Ypsilanti area."
+    },
+    {
+      question: "When does this run?",
+      answer: "The 3rd annual Ypsi Winter Games runs from January 15, 2026 to March 15, 2026. Bundle up and happy hunting!"
+    },
+    {
       question: "How did this come about?",
       answer: "We were inspired by the Ann Arbor Summer Games and how they brought the community together in such a cool way. The first Ypsi Winter Games was just amongst friends - a small experiment to see if we could create something fun for our community. It was such a success that we've grown it into this year's 3rd annual event!"
     },
@@ -47,18 +59,6 @@ export default function FAQ() {
     {
       question: "Are we associated with the Ypsilanti District Library?",
       answer: "We're not officially partnering with YDL this year, but we've made contact with them and love what they do for our community! YDL actually runs their own awesome reading challenges throughout the year (Summer, Winter, and Spring), so definitely check those out! You can find more info in their newsletter, The Loop."
-    },
-    {
-      question: "When does this run?",
-      answer: "The 3rd annual Ypsi Winter Games runs from January 15, 2026 to March 15, 2026. Bundle up and happy hunting!"
-    },
-    {
-      question: "How do you play?",
-      answer: "Check out the Badges page to see all available challenges! Each badge has a description with hints about where to find its code. Once you find a code, enter it on the home page to earn 100 points. Redeem your points for prizes! Each code can only be redeemed once per player."
-    },
-    {
-      question: "How do you pick up prizes?",
-      answer: "Prizes can be picked up at multiple events throughout the season! We'll email you the specific pickup locations and times when you claim a prize. Keep an eye on your inbox for details about upcoming prize pickup events in the Ypsilanti area."
     },
     {
       question: "How can you contact us?",
