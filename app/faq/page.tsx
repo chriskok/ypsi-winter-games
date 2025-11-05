@@ -57,6 +57,10 @@ export default function FAQ() {
       answer: "Check out the Badges page to see all available challenges! Each badge has a description with hints about where to find its code. Once you find a code, enter it on the home page to earn 100 points. Redeem your points for prizes! Each code can only be redeemed once per player."
     },
     {
+      question: "How do you pick up prizes?",
+      answer: "Prizes can be picked up at multiple events throughout the season! We'll email you the specific pickup locations and times when you claim a prize. Keep an eye on your inbox for details about upcoming prize pickup events in the Ypsilanti area."
+    },
+    {
       question: "How can you contact us?",
       answer: "Have questions, feedback, or issues? Reach out to us at ypsiwintergames@gmail.com - we'd love to hear from you!"
     }

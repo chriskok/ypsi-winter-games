@@ -38,7 +38,7 @@ export default function Admin() {
   const [newPrizeName, setNewPrizeName] = useState('');
   const [newPrizeCost, setNewPrizeCost] = useState(500);
   const [newPrizeDescription, setNewPrizeDescription] = useState('');
-  const [newPrizeImageUrl, setNewPrizeImageUrl] = useState('');
+  const [newPrizeIcon, setNewPrizeIcon] = useState('gift');
   const [newPrizeTotalAvailable, setNewPrizeTotalAvailable] = useState(50);
   const [newPrizeRedeemed, setNewPrizeRedeemed] = useState(0);
 
@@ -299,7 +299,7 @@ export default function Admin() {
         name: newPrizeName,
         cost: newPrizeCost,
         description: newPrizeDescription,
-        imageUrl: newPrizeImageUrl || '',
+        icon: newPrizeIcon,
         inStock: true,
         totalAvailable: newPrizeTotalAvailable,
         redeemed: newPrizeRedeemed,
@@ -309,7 +309,7 @@ export default function Admin() {
       setNewPrizeName('');
       setNewPrizeCost(500);
       setNewPrizeDescription('');
-      setNewPrizeImageUrl('');
+      setNewPrizeIcon('gift');
       setNewPrizeTotalAvailable(50);
       setNewPrizeRedeemed(0);
       await fetchPrizes();
@@ -344,7 +344,7 @@ export default function Admin() {
       name: prize.name,
       cost: prize.cost,
       description: prize.description || '',
-      imageUrl: prize.imageUrl || '',
+      icon: prize.icon || 'gift',
       inStock: prize.inStock,
       totalAvailable: prize.totalAvailable || 0,
       redeemed: prize.redeemed || 0,
@@ -366,7 +366,7 @@ export default function Admin() {
         name: editingPrize.name,
         cost: editingPrize.cost,
         description: editingPrize.description,
-        imageUrl: editingPrize.imageUrl || '',
+        icon: editingPrize.icon || 'gift',
         inStock: editingPrize.inStock,
         totalAvailable: editingPrize.totalAvailable,
         redeemed: editingPrize.redeemed,
@@ -747,15 +747,21 @@ export default function Admin() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Image URL (optional)</label>
+                  <label className="block text-sm font-medium mb-1">Icon</label>
                   <input
-                    type="url"
-                    value={newPrizeImageUrl}
-                    onChange={(e) => setNewPrizeImageUrl(e.target.value)}
-                    placeholder="https://example.com/image.jpg"
+                    type="text"
+                    value={newPrizeIcon}
+                    onChange={(e) => setNewPrizeIcon(e.target.value)}
+                    placeholder="gift, trophy, award, star, etc."
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Paste an image URL from any image hosting service</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter any Bootstrap icon name from <a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">icons.getbootstrap.com</a>
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <i className={`bi bi-${newPrizeIcon} text-4xl text-accent`}></i>
+                    <span className="text-sm text-gray-500">Preview</span>
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -1050,26 +1056,21 @@ export default function Admin() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Image URL</label>
+                  <label className="block text-sm font-medium mb-1">Icon</label>
                   <input
-                    type="url"
-                    value={editingPrize.imageUrl}
-                    onChange={(e) => setEditingPrize({ ...editingPrize, imageUrl: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
+                    type="text"
+                    value={editingPrize.icon || 'gift'}
+                    onChange={(e) => setEditingPrize({ ...editingPrize, icon: e.target.value })}
+                    placeholder="gift, trophy, award, star, etc."
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Paste an image URL from any image hosting service</p>
-                  {editingPrize.imageUrl && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-500 mb-1">Preview:</p>
-                      <img
-                        src={editingPrize.imageUrl}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-lg border"
-                        onError={(e) => { e.currentTarget.src = ''; e.currentTarget.alt = 'Invalid image URL'; }}
-                      />
-                    </div>
-                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter any Bootstrap icon name from <a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">icons.getbootstrap.com</a>
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <i className={`bi bi-${editingPrize.icon || 'gift'} text-4xl text-accent`}></i>
+                    <span className="text-sm text-gray-500">Preview</span>
+                  </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">

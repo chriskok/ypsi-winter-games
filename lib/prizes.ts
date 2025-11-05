@@ -6,6 +6,7 @@ export interface Prize {
   inStock: boolean;
   totalAvailable: number;
   redeemed: number;
+  icon?: string; // Bootstrap icon class name (e.g., 'gift', 'trophy', 'award')
 }
 
 export const PRIZES: Prize[] = [

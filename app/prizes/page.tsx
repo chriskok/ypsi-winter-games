@@ -12,7 +12,7 @@ interface Prize {
   name: string;
   description: string;
   cost: number;
-  imageUrl?: string;
+  icon?: string;
   inStock: boolean;
   totalAvailable: number;
   redeemed: number;
@@ -142,18 +142,15 @@ export default function Prizes() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {prizes.map((prize) => (
-            <div key={prize.id} className="bg-white rounded-lg shadow p-6 flex flex-col">
-              {prize.imageUrl && (
-                <img
-                  src={prize.imageUrl}
-                  alt={prize.name}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
+            <div key={prize.id} className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+              {prize.icon && (
+                <div className="w-full flex justify-center mb-4">
+                  <i className={`bi bi-${prize.icon} text-6xl text-accent`}></i>
+                </div>
               )}
-              <h3 className="text-xl font-bold mb-2">{prize.name}</h3>
-              <p className="text-gray-600 mb-2 flex-1">{prize.description}</p>
-              <p className="text-sm text-gray-500 mb-4">
+              <h3 className="text-xl font-bold mb-2 text-center">{prize.name}</h3>
+              <p className="text-gray-600 mb-2 flex-1 text-center">{prize.description}</p>
+              <p className="text-sm text-gray-500 mb-4 text-center">
                 {prize.redeemed} of {prize.totalAvailable} claimed
                 {prize.redeemed >= prize.totalAvailable && <span className="text-red-600 font-semibold ml-2">(Sold Out)</span>}
               </p>
