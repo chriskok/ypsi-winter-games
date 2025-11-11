@@ -46,6 +46,10 @@ export default function Admin() {
   const [isPrizeEditModalOpen, setIsPrizeEditModalOpen] = useState(false);
   const [editingPrize, setEditingPrize] = useState<any>(null);
 
+  // Prize claims state
+  const [prizeClaims, setPrizeClaims] = useState<any[]>([]);
+  const [viewingClaimsForPrize, setViewingClaimsForPrize] = useState<string | null>(null);
+
   // Users state
   const [users, setUsers] = useState<any[]>([]);
 
@@ -67,7 +71,7 @@ export default function Admin() {
           return;
         }
 
-        await Promise.all([fetchCodes(), fetchBadges(), fetchPrizes(), fetchUsers()]);
+        await Promise.all([fetchCodes(), fetchBadges(), fetchPrizes(), fetchUsers(), fetchClaims()]);
         setLoading(false);
       } else {
         setLoading(false);
@@ -127,6 +131,22 @@ export default function Admin() {
   const fetchUsers = async () => {
     const snapshot = await getDocs(collection(db, 'users'));
     setUsers(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  };
+
+  const fetchClaims = async () => {
+    const snapshot = await getDocs(collection(db, 'claims'));
+    const claimsData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setPrizeClaims(claimsData);
+  };
+
+  // Helper function to get actual claim count for a prize
+  const getActualClaimCount = (prizeId: string) => {
+    return prizeClaims.filter(claim => claim.prizeId === prizeId).length;
+  };
+
+  // Helper function to get claims for a specific prize
+  const getClaimsForPrize = (prizeId: string) => {
+    return prizeClaims.filter(claim => claim.prizeId === prizeId);
   };
 
   // Code management
@@ -777,7 +797,7 @@ export default function Admin() {
                     <p className="text-xs text-gray-500 mt-1">How many of this prize are available</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Already Redeemed</label>
+                    <label className="block text-sm font-medium mb-1">Manual Redeemed Count</label>
                     <input
                       type="number"
                       value={newPrizeRedeemed}
@@ -786,7 +806,7 @@ export default function Admin() {
                       required
                       min={0}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Usually 0 for new prizes</p>
+                    <p className="text-xs text-gray-500 mt-1">Usually 0 for new prizes (editable count, separate from actual claims)</p>
                   </div>
                 </div>
                 <button type="submit" className="w-full bg-accent text-white py-2 rounded-lg font-semibold hover:bg-accent/90">
@@ -805,55 +825,72 @@ export default function Admin() {
                     <tr>
                       <th className="p-4 text-left">Prize Name</th>
                       <th className="p-4 text-left">Description</th>
-                      <th className="p-4 text-left">Inventory</th>
+                      <th className="p-4 text-left">Inventory (Manual)</th>
+                      <th className="p-4 text-left">Actual Claims</th>
                       <th className="p-4 text-left">Cost</th>
                       <th className="p-4 text-left">Status</th>
                       <th className="p-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {prizes.map((prize) => (
-                      <tr key={prize.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 font-semibold">{prize.name}</td>
-                        <td className="p-4 text-gray-600 text-sm">{prize.description}</td>
-                        <td className="p-4">
-                          <div className="text-sm">
-                            <span className="font-semibold">{prize.redeemed || 0}</span>
-                            <span className="text-gray-500"> / </span>
-                            <span>{prize.totalAvailable || 0}</span>
-                          </div>
-                          {(prize.redeemed || 0) >= (prize.totalAvailable || 0) && (
-                            <span className="text-xs text-red-600 font-semibold">Sold Out</span>
-                          )}
-                        </td>
-                        <td className="p-4">{prize.cost} pts</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded text-sm ${prize.inStock ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {prize.inStock ? 'In Stock' : 'Out of Stock'}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right space-x-2">
-                          <button
-                            onClick={() => handleOpenPrizeEditModal(prize)}
-                            className="px-3 py-1 bg-primary/20 text-accent rounded hover:bg-primary/30 text-sm font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleTogglePrize(prize.id, prize.inStock)}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
-                          >
-                            {prize.inStock ? 'Mark Out' : 'Mark In'}
-                          </button>
-                          <button
-                            onClick={() => handleDeletePrize(prize.id)}
-                            className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {prizes.map((prize) => {
+                      const actualClaims = getActualClaimCount(prize.id);
+                      return (
+                        <tr key={prize.id} className="border-b hover:bg-gray-50">
+                          <td className="p-4 font-semibold">{prize.name}</td>
+                          <td className="p-4 text-gray-600 text-sm">{prize.description}</td>
+                          <td className="p-4">
+                            <div className="text-sm">
+                              <span className="font-semibold">{prize.redeemed || 0}</span>
+                              <span className="text-gray-500"> / </span>
+                              <span>{prize.totalAvailable || 0}</span>
+                            </div>
+                            {(prize.redeemed || 0) >= (prize.totalAvailable || 0) && (
+                              <span className="text-xs text-red-600 font-semibold">Sold Out</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-lg text-accent">{actualClaims}</span>
+                              {actualClaims > 0 && (
+                                <button
+                                  onClick={() => setViewingClaimsForPrize(prize.id)}
+                                  className="text-xs px-2 py-1 bg-primary/20 text-accent rounded hover:bg-primary/30"
+                                >
+                                  View Details
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4">{prize.cost} pts</td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 rounded text-sm ${prize.inStock ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              {prize.inStock ? 'In Stock' : 'Out of Stock'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right space-x-2">
+                            <button
+                              onClick={() => handleOpenPrizeEditModal(prize)}
+                              className="px-3 py-1 bg-primary/20 text-accent rounded hover:bg-primary/30 text-sm font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleTogglePrize(prize.id, prize.inStock)}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+                            >
+                              {prize.inStock ? 'Mark Out' : 'Mark In'}
+                            </button>
+                            <button
+                              onClick={() => handleDeletePrize(prize.id)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1085,7 +1122,7 @@ export default function Admin() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Already Redeemed</label>
+                    <label className="block text-sm font-medium mb-1">Manual Redeemed Count</label>
                     <input
                       type="number"
                       value={editingPrize.redeemed}
@@ -1093,6 +1130,7 @@ export default function Admin() {
                       className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       min={0}
                     />
+                    <p className="text-xs text-gray-500 mt-1">Editable count for inventory tracking (separate from actual claims)</p>
                   </div>
                 </div>
 
@@ -1121,6 +1159,73 @@ export default function Admin() {
                   className="px-6 py-2 bg-accent text-white rounded-lg font-semibold hover:bg-accent/90"
                 >
                   Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Claims Modal */}
+        {viewingClaimsForPrize && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b">
+                <h3 className="text-2xl font-bold text-accent">
+                  Claims for: {prizes.find(p => p.id === viewingClaimsForPrize)?.name}
+                </h3>
+              </div>
+
+              <div className="p-6">
+                {getClaimsForPrize(viewingClaimsForPrize).length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No claims yet</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="p-3 text-left">User</th>
+                          <th className="p-3 text-left">Email</th>
+                          <th className="p-3 text-left">Points Spent</th>
+                          <th className="p-3 text-left">Claimed At</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getClaimsForPrize(viewingClaimsForPrize)
+                          .sort((a, b) => {
+                            const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+                            const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+                            return dateB.getTime() - dateA.getTime();
+                          })
+                          .map((claim) => {
+                            const claimUser = users.find(u => u.id === claim.userId);
+                            const claimDate = claim.timestamp?.toDate ? claim.timestamp.toDate() : new Date(claim.timestamp);
+                            return (
+                              <tr key={claim.id} className="border-b hover:bg-gray-50">
+                                <td className="p-3 font-semibold">
+                                  {claimUser?.displayName || 'Unknown User'}
+                                </td>
+                                <td className="p-3 text-gray-600 text-sm">
+                                  {claimUser?.email || 'N/A'}
+                                </td>
+                                <td className="p-3">{claim.prizeCost} pts</td>
+                                <td className="p-3 text-sm text-gray-600">
+                                  {claimDate.toLocaleString()}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 border-t flex justify-end">
+                <button
+                  onClick={() => setViewingClaimsForPrize(null)}
+                  className="px-6 py-2 bg-accent text-white rounded-lg font-semibold hover:bg-accent/90"
+                >
+                  Close
                 </button>
               </div>
             </div>

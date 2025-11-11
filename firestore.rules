@@ -31,7 +31,14 @@ service cloud.firestore {
     // Prizes collection
     match /prizes/{prizeId} {
       allow read: if request.auth != null;
+      // Allow full write access for admins
       allow write: if isAdmin();
+      // Allow authenticated users to increment the redeemed count
+      allow update: if request.auth != null &&
+                       // Only allow updating the 'redeemed' field
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['redeemed']) &&
+                       // Ensure it's being incremented (new value > old value)
+                       request.resource.data.redeemed > resource.data.redeemed;
     }
 
     // Redemptions collection

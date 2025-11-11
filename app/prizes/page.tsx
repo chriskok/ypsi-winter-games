@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, increment, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, increment, collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Navbar from '@/components/Navbar';
 
@@ -22,6 +22,7 @@ export default function Prizes() {
   const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
   const [prizes, setPrizes] = useState<Prize[]>([]);
+  const [userClaims, setUserClaims] = useState<string[]>([]); // Store prizeIds the user has claimed
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function Prizes() {
         if (userDoc.exists()) {
           setUserData(userDoc.data());
         }
-        await fetchPrizes();
+        await Promise.all([fetchPrizes(), fetchUserClaims(currentUser.uid)]);
         setLoading(false);
       } else {
         setLoading(false);
@@ -55,8 +56,21 @@ export default function Prizes() {
     setPrizes(prizesData);
   };
 
+  const fetchUserClaims = async (userId: string) => {
+    const q = query(collection(db, 'claims'), where('userId', '==', userId));
+    const snapshot = await getDocs(q);
+    const claimedPrizeIds = snapshot.docs.map((doc) => doc.data().prizeId);
+    setUserClaims(claimedPrizeIds);
+  };
+
   const handleClaim = async (prizeId: string, prizeCost: number, prizeName: string) => {
     setMessage('');
+
+    // Check if user has already claimed this prize
+    if (userClaims.includes(prizeId)) {
+      setMessage('You have already claimed this prize!');
+      return;
+    }
 
     // Find the prize to check inventory
     const prize = prizes.find(p => p.id === prizeId);
@@ -111,6 +125,9 @@ export default function Prizes() {
 
       setMessage(`Success! You claimed ${prizeName}`);
 
+      // Update local state to reflect the claim
+      setUserClaims([...userClaims, prizeId]);
+
       // Refresh data
       const updatedUserDoc = await getDoc(doc(db, 'users', user.uid));
       setUserData(updatedUserDoc.data());
@@ -157,14 +174,30 @@ export default function Prizes() {
               <p className="text-2xl font-bold text-accent mb-4">{prize.cost} points</p>
               <button
                 onClick={() => handleClaim(prize.id, prize.cost, prize.name)}
-                disabled={!prize.inStock || prize.redeemed >= prize.totalAvailable || userData?.totalPoints < prize.cost || userData?.prizesClaimedCount >= 4}
+                disabled={
+                  userClaims.includes(prize.id) ||
+                  !prize.inStock ||
+                  prize.redeemed >= prize.totalAvailable ||
+                  userData?.totalPoints < prize.cost ||
+                  userData?.prizesClaimedCount >= 4
+                }
                 className={`w-full py-2 rounded-lg font-semibold ${
-                  prize.inStock && prize.redeemed < prize.totalAvailable && userData?.totalPoints >= prize.cost && userData?.prizesClaimedCount < 4
+                  !userClaims.includes(prize.id) &&
+                  prize.inStock &&
+                  prize.redeemed < prize.totalAvailable &&
+                  userData?.totalPoints >= prize.cost &&
+                  userData?.prizesClaimedCount < 4
                     ? 'bg-accent text-white hover:bg-accent/90'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {prize.redeemed >= prize.totalAvailable ? 'Sold Out' : !prize.inStock ? 'Out of Stock' : 'Claim Prize'}
+                {userClaims.includes(prize.id)
+                  ? 'Already Claimed'
+                  : prize.redeemed >= prize.totalAvailable
+                  ? 'Sold Out'
+                  : !prize.inStock
+                  ? 'Out of Stock'
+                  : 'Claim Prize'}
               </button>
             </div>
           ))}
